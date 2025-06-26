@@ -36,23 +36,4 @@ This project is designed to help you improve your Python programming skills with
 
 ## Getting Started
 
-To get started with this project, follow these steps:
-
-1. Clone the repository to your local machine.
-
-
-2. Ensure you have the required Python version (3.7) installed.
-
-3. Use your preferred editor (vi, vim, emacs) to work on the project files.
-
-4. Follow the project requirements and guidelines outlined above to complete the tasks.
-
-5. Use Mypy to validate your code for type correctness.
-
-## Additional Resources
-
-- [Python Type Hints (PEP 484)](https://www.python.org/dev/peps/pep-0484/)
-- [Mypy Documentation](https://mypy.readthedocs.io/en/stable/index.html)
-
-Happy coding!
-
+To get started with this project, follow these step
