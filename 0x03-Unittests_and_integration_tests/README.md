@@ -1,37 +1,26 @@
-# Unittests and Integration Tests Project
+# 0x03. Unittests and Integration Tests
 
-This project focuses on the concepts of unit tests and integration tests in software development. It also covers common testing patterns and techniques such as mocking, parametrization, and fixtures.
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Learning Objectives](#learning-objectives)
-- [Requirements](#requirements)
-- [Project Structure](#project-structure)
-- [Usage](#usage)
-- [Testing Patterns](#testing-patterns)
-- [Contributing](#contributing)
-- [License](#license)
-
-## Introduction
-
-This project aims to enhance your understanding of different testing methodologies used in software development. It covers the differences between unit tests, which focus on individual components, and integration tests, which verify interactions between multiple components. The project also delves into common testing patterns and practices, including the use of mocking, parametrization, and fixtures.
+This project focuses on writing **unit tests** and **integration tests** in Python. You will learn how to apply testing techniques like **mocking**, **parameterization**, and **fixtures**, while also understanding the differences between unit and integration testing.
 
 ## Learning Objectives
 
-By the end of this project, you will be able to:
+At the end of this project, you should be able to explain the following concepts clearly:
 
-- Differentiate between unit tests and integration tests.
-- Apply common testing patterns, such as mocking, parametrization, and fixtures.
+- The difference between unit and integration tests.
+- Common testing patterns such as:
+  - Mocking
+  - Parametrization
+  - Fixtures
+- How to use the `unittest` and `unittest.mock` libraries.
+- How to structure tests to ensure your functions work correctly and reliably.
+- Best practices in writing readable, maintainable test cases.
 
 ## Requirements
 
-- **Operating System**: Ubuntu 18.04 LTS
-- **Python Version**: Python 3.7
-- **Coding Style**: Pycodestyle (PEP 8) style (version 2.5)
+- Python 3.7
+- Code follows the **pycodestyle** (PEP8) style guide (version 2.5).
+- All modules, classes, and functions are documented with proper docstrings.
+- All functions and coroutines are type-annotated.
+- All files are executable and end with a new line.
 
 ## Project Structure
-
-The project directory includes the following files, among others:
-
-
