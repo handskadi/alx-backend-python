@@ -1,8 +1,3 @@
-Objective: create a decorator that caches the results of a database queries inorder to avoid redundant calls
-
-Instructions:
-
-Complete the code below by implementing a decorator cache_query(func) that caches query results based on the SQL query string
 import time
 import sqlite3 
 import functools
@@ -10,7 +5,27 @@ import functools
 
 query_cache = {}
 
-"""your code goes here"""
+def with_db_connection(func):
+    @functools.wraps(func)
+    def connect_db(*args, **kwargs):
+      conn = sqlite3.connect('users.db')
+      try:
+        result =  func(conn, *args, **kwargs)
+      finally:
+         conn.close()
+      return result
+    return connect_db
+
+def cache_query(func):
+    @functools.wraps(func)
+    def wrapper_cache(*args, **kwargs):
+        cache_key = tuple(kwargs.items())
+        if cache_key not in wrapper_cache.cache:
+            wrapper_cache.cache[cache_key] = func(*args, **kwargs)
+        return wrapper_cache.cache[cache_key]
+    wrapper_cache.cache = query_cache
+    return wrapper_cache             
+
 
 @with_db_connection
 @cache_query

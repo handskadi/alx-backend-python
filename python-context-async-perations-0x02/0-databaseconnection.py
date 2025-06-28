@@ -1,22 +1,18 @@
 import sqlite3
 
-class DatabaseConnection:
+
+class DatabaseConnection(object):
     def __init__(self, db_name):
-        self.db_name = db_name
-        self.conn = None
-
+        self.db_obj = sqlite3.connect(db_name)
     def __enter__(self):
-        self.conn = sqlite3.connect(self.db_name)
-        return self.conn
+        return self.db_obj
+    def __exit__(self, type, value, traceback):
+        self.db_obj.close()
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        if self.conn:
-            self.conn.close()
 
-# Using the custom context manager to query users
-with DatabaseConnection('users.db') as conn:
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users")
-    results = cursor.fetchall()
-    for row in results:
-        print(row)
+
+with DatabaseConnection('./../python-decorators-0x01/users.db') as conn:
+    cursor =  conn.cursor()
+    cursor.execute("SELECT * FROM users;")
+    print(cursor.fetchall())
+    

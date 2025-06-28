@@ -1,47 +1,36 @@
-import mysql.connector
-from mysql.connector import Error
+from seed import connect_to_prodev
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import select
+from models import User
+
 
 def stream_user_ages():
-    
-    try:
-        connection = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="T!g3rfish",
-            database="ALX_prodev"
-        )
-        cursor = connection.cursor()
-        cursor.execute("SELECT age FROM user_data")
 
-        for (age,) in cursor:  # Single loop to yield ages one by one
+    engine = connect_to_prodev()
+    Session = sessionmaker(bind=engine)
+    
+  
+    with Session() as session:    
+        stmt = select(User.age)
+        result = session.scalars(stmt)
+        
+        for age in result:
             yield age
 
-    except Error as e:
-        print(f" Error streaming user ages: {e}")
-    finally:
-        if connection.is_connected():
-            cursor.close()
-            connection.close()
+def avg_user():
+    ages = stream_user_ages()
+    counter = 0
+    avg = 0
+    for age in ages:
+        avg += age
+        counter += 1
+
+    print(f"Average age of users: {round(avg/counter, 2)}")
 
 
-def compute_average_age():
-   
-    total_age = 0
-    count = 0
 
-    # Loop through the generator and aggregate the values
-    for age in stream_user_ages():
-        total_age += age
-        count += 1
-
-    if count == 0:
-        print("No users found.")
-        return
-
-    average_age = total_age / count
-    print(f" Average age of users: {average_age:.2f}")
+# for age in stream_user_ages():
+#     print(age)
 
 
-# Example usage:
-if __name__ == "__main__":
-    compute_average_age()
+avg_user()

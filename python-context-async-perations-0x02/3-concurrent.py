@@ -1,35 +1,34 @@
-import asyncio
 import aiosqlite
+import asyncio
 
-# Asynchronous function to fetch all users and return the list
+
 async def async_fetch_users():
-    async with aiosqlite.connect('users.db') as db:
+    result = []
+    async with aiosqlite.connect('./../python-decorators-0x01/users.db') as db:
         async with db.execute("SELECT * FROM users") as cursor:
-            users = await cursor.fetchall()
-            return users
+            async for row in cursor:
+                result.append(row)
+    return result
 
-# Asynchronous function to fetch users older than 40 and return the list
+
 async def async_fetch_older_users():
-    async with aiosqlite.connect('users.db') as db:
-        async with db.execute("SELECT * FROM users WHERE age > 40") as cursor:
-            older_users = await cursor.fetchall()
-            return older_users
+    result = []
+    async with aiosqlite.connect('./../python-decorators-0x01/users.db') as db:
 
-# Function to run both queries concurrently and handle the returned data
+        async with db.execute("SELECT * FROM users where age > 40") as cursor:
+            async for row in cursor:
+                result.append(row)
+
+    return result
+
+
+
 async def fetch_concurrently():
-    all_users, older_users = await asyncio.gather(
+    db_result = await asyncio.gather(
         async_fetch_users(),
         async_fetch_older_users()
     )
 
-    print("All Users:")
-    for user in all_users:
-        print(user)
+    print(db_result)
 
-    print("\nUsers Older Than 40:")
-    for user in older_users:
-        print(user)
-
-# Entry point
-if __name__ == "__main__":
-    asyncio.run(fetch_concurrently())
+asyncio.run(fetch_concurrently())    
