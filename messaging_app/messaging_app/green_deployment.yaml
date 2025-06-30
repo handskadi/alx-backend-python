@@ -18,10 +18,26 @@ spec:
         version: green
     spec:
       containers:
-        - name: messaging-app
-          image: your-dockerhub-username/messaging-app:green-latest
-          ports:
-            - containerPort: 8000
-          env:
-            - name: DJANGO_SETTINGS_MODULE
-              value: "messaging_app.settings"
+      - name: messaging-app
+        image: ghcr.io/mankindjnr/alx-message-app:latest  # Use a different tag if testing a new version
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DJANGO_SETTINGS_MODULE
+          value: messaging_app.settings
+        - name: DEBUG
+          value: "False"
+        readinessProbe:
+          httpGet:
+            path: "/api/health/"
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: "/api/health/"
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 30
+      imagePullSecrets:
+      - name: ghcr-regcred

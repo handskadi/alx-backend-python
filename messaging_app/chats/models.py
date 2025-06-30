@@ -1,76 +1,94 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 import uuid
+from django.conf import settings
+from django.contrib.auth.models import User, AbstractUser
 
+class User(AbstractUser):
+    user_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    # override default fields from abstract user
+    first_name = models.CharField(max_length=255, null=False, blank=False)
+    last_name = models.CharField(max_length=255, null=False, blank=False)
+    email = models.EmailField(unique=True, null=False, blank=False, db_index=True)
 
-class UserManager(BaseUserManager):
-    """
-    A class to create user and superuser
-    """
-    def create_user(self, email, password=None, **kwargs):
-        if email is None:
-            raise ValueError("User must have an email")
-        email = self.normalize_email(email)
-        user = self.model(email=email, **kwargs)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-    
-    def create_superuser(self, email, password=None, **kwargs):
-        if email is None:
-            raise ValueError("User must have an email")
-        user = self.create_user(email, password, **kwargs)
-        user.is_superuser = True
-        user.is_staff = True
-        user.save(using=self._db)
-        return user
+    # custome fields
+    password_hash = models.CharField(max_length=255, null=False, blank=False)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
 
+    # Role field as a ENUM
+    ROLE_CHOICES = [
+        ('guest', 'Guest'),
+        ('host', 'Host'),
+        ('admin', 'Admin'),
+    ]
+    role = models.CharField(
+        max_length=10,
+        choices=ROLE_CHOICES,
+        default='guest',
+        null=False,
+        blank=False
+    )
 
-class user(AbstractBaseUser, PermissionsMixin):
-    """
-    A model description for user
-    """
-    user_id = models.UUIDField(db_index=True, primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(db_index=True, unique=True)
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=15, blank=True)
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    is_active = models.BooleanField(default=True)
-    is_superuser = models.BooleanField(default=False)
+    # Remove unused fields from AbstractUser
+    username = None
+    is_staff = None # if you don't need staff functionality
+    is_superuser = None #if you don;t need superuser functionality
 
-    created = models.DateTimeField(auto_now=True)
-
+    # Authentication field
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
 
-    objects = UserManager()
-
-    def __str__(self):
-        return self.email
+    def __str_(self):
+        return f"{self.first_name} {self.last_name} ({self.email})"
 
 
 class Conversation(models.Model):
-    """
-    A model description for conversation
-    """
-    conversation_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    participants = models.ManyToManyField('user', related_name='conversations')
+    conversation_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    # Foreign key to User model
+    participants = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name='conversations',
+        blank=False
+    )
+    # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Conversation {self.conversation_id}"
 
-
 class Message(models.Model):
-    """
-    A model description for message
-    """
-    message_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sender = models.ForeignKey('user', on_delete=models.CASCADE, related_name='messages')
-    conversation = models.ForeignKey('Conversation', on_delete=models.CASCADE, related_name='messages')
-    message_body = models.TextField()
+    message_id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    conversation = models.ForeignKey(
+        Conversation,
+        on_delete=models.CASCADE,
+        related_name='messages',
+        blank=False
+    )
+    # Foreign key to User model
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='messages_sent',
+        blank=False
+    )
+    # Message content
+    message_body = models.TextField(blank=False, null=False)
+    # Timestamps
     sent_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Message {self.message_id} from {self.sender.email}"
+        return f"Message {self.message_id} from {self.sender} in {self.conversation}"

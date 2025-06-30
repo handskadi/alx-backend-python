@@ -1,16 +1,37 @@
-from rest_framework import permissions
-from .models import Conversation, Message
+from rest_framework.permissions import BasePermission, SAFE_METHODS
 
-class IsParticipantOfConversation(permissions.BasePermission):
-    http_method_names = ["PUT", "PATCH", "DELETE"]
+class IsOwnerOrParticipant(BasePermission):
+    """
+    Custom permission to ensure users can access only their own messages and conversations.
+    """
+
     def has_permission(self, request, view):
+        # ensure the user is authenticated
         return request.user and request.user.is_authenticated
 
     def has_object_permission(self, request, view, obj):
-        if isinstance(obj, Conversation):
+        if hasattr(obj, 'participants'):  # For Conversations
             return request.user in obj.participants.all()
+        elif hasattr(obj, 'sender'):  # For Messages
+            return obj.sender == request.user or request.user in obj.conversation.participants.all()
+        return False
 
-        if isinstance(obj, Message):
-            return request.user in obj.conversation.participants.all()
+class IsParticipantOfConversation(BasePermission):
+    """
+    Custom permission to ensure only participants of a conversation can send, view, update, and delete messages.
+    """
 
+    def has_permission(self, request, view):
+        # Ensure the user is authenticated
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        # Check if the object is a Conversation or a Message
+        if hasattr(obj, 'participants'):  # For Conversation
+            return request.user in obj.participants.all()
+        elif hasattr(obj, 'sender'):  # For Message
+            return (
+                request.user in obj.conversation.participants.all()
+                or obj.sender == request.user
+            )
         return False

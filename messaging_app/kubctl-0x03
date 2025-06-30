@@ -1,46 +1,35 @@
 #!/bin/bash
 
-set -e
-
-DEPLOYMENT_NAME="messaging-app-blue"
-NAMESPACE="default"
-APP_LABEL="messaging-app"
-CHECK_URL="http://localhost:8000"  # Change this if you access the app differently
-
-echo "🔄 Applying updated deployment with image version 2.0..."
+# Step 1: Apply the updated blue deployment
+echo "Applying updated deployment..."
 kubectl apply -f blue_deployment.yaml
 
-echo "⏳ Monitoring rollout status..."
-kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+# Step 2: Trigger a rolling update and monitor the progress
+echo "Monitoring rollout progress..."
+kubectl rollout status deployment/messaging-app-blue
 
-echo "🚦 Starting continuous curl test to check for downtime (CTRL+C to stop)..."
+# Step 3: Test app for downtime
+echo "Testing app for downtime using curl..."
+SERVICE_IP=$(kubectl get svc messaging-app-service -o jsonpath='{.spec.clusterIP}')
+echo "Service IP: $SERVICE_IP"
 
-# Run curl in background, keep track of failures
-FAILURES=0
+if [ -z "$SERVICE_IP" ]; then
+    echo "Service IP not found. Exiting..."
+    exit 1
+fi
 
-while true; do
-  STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" $CHECK_URL || echo "000")
-  TIMESTAMP=$(date +"%T")
+# Continuous curl requests to test downtime
+echo "Sending continuous requests..."
+for i in {1..30}; do
+    curl -s http://$SERVICE_IP:8000/api/health/ > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Request $i: Service is unavailable!"
+    else
+        echo "Request $i: Service is up."
+    fi
+    sleep 1
+done
 
-  if [[ "$STATUS_CODE" != "200" ]]; then
-    echo "[$TIMESTAMP] Request failed with status code: $STATUS_CODE"
-    ((FAILURES++))
-  else
-    echo "[$TIMESTAMP] Request succeeded"
-  fi
-
-  sleep 1
-done &
-
-CURL_PID=$!
-
-# Wait for rollout completion again as a safe guard (optional)
-kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
-
-# Kill the curl loop after rollout is complete
-kill $CURL_PID
-
-echo "✅ Rolling update complete."
-
-echo "🔍 Current pods:"
-kubectl get pods -l app=$APP_LABEL,version=blue -n $NAMESPACE
+# Step 4: Verify the rolling update by listing pods
+echo "Verifying updated pods..."
+kubectl get pods -l app=messaging-app -l version=blue

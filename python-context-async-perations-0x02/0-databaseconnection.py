@@ -1,37 +1,36 @@
-#!/usr/bin/python3
-
 import sqlite3
 
 class DatabaseConnection:
+    """
+    A custom context manager for handling SQLite database connections.
+    Automatically opens and closes the connection using `__enter__` and `__exit__`.
+    """
     def __init__(self, db_name):
         self.db_name = db_name
         self.connection = None
-        self.cursor = None
 
     def __enter__(self):
+        # Open the database connection
         self.connection = sqlite3.connect(self.db_name)
-        self.cursor = self.connection.cursor()
-        return self.cursor
-    
+        return self.connection
+
     def __exit__(self, exc_type, exc_value, traceback):
-        if exc_type:
-            print("An error occured: ", exc_value)
-        if self.cursor:
-            self.cursor.close()
+        # Close the database connection
         if self.connection:
             self.connection.close()
+        # Handle exceptions, if any
+        if exc_type:
+            print(f"An error occurred: {exc_value}")
+        return True  # Suppress the exception if necessary
 
-def setup_database():
-    with sqlite3.connect("users.db") as conn:
+if __name__ == "__main__":
+    db_name = "users.db"
+    query = "SELECT * FROM users"
+
+    with DatabaseConnection(db_name) as conn:
         cursor = conn.cursor()
-        cursor.execute("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT, email VARCHAR(50), age INTEGER)")
-        cursor.execute("INSERT OR IGNORE INTO users (id, name, email, age) VALUES (1, 'Alice', 'alile@yahoo.com', 30), (2, 'Bob', 'bob@gmail.com', 24)")
-        conn.commit()
-
-setup_database()
-
-with DatabaseConnection("users.db") as cursor:
-    cursor.execute("SELECT * FROM users")
-    results = cursor.fetchall()
-    for row in results:
-        print(row)
+        cursor.execute(query)
+        results = cursor.fetchall()
+        print("Query Results:")
+        for row in results:
+            print(row)

@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """Generic utilities for github org client.
 """
@@ -73,3 +74,25 @@ def memoize(fn: Callable) -> Callable:
         return getattr(self, attr_name)
 
     return property(memoized)
+
+
+"""# get_json tests
+def test_get_json(requests_mock):
+    url = "http://test.com"
+    payload = {"key": "value"}
+    requests_mock.get(url, json=payload)
+    assert get_json(url) == payload
+
+# memoize tests
+def test_memoize():
+    class MyClass:
+        @memoize
+        def a_method(self):
+            print("a_method called")
+            return 42
+
+    my_object = MyClass()
+    assert my_object.a_method == 42
+    assert my_object.a_method == 42
+
+# test_utils.py"""

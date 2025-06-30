@@ -1,0 +1,207 @@
+{
+	"info": {
+		"_postman_id": "fa06027c-93ab-490e-a405-a4a7ca8be16c",
+		"name": "alx-chat-app",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "28080049"
+	},
+	"item": [
+		{
+			"name": "api/register/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"first_name\": \"jane\",\n    \"last_name\": \"Doe\",\n    \"email\": \"jane.doe@example.com\",\n    \"phone_number\": \"234567890\",\n    \"role\": \"guest\",\n    \"password\": \"njoroge\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/api/register/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"api",
+						"register",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "auth/login/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"john.doe@example.com\",\n    \"password\": \"njoroge\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/auth/login/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"auth",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "auth/refresh/",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTczNTA0MDMzNSwiaWF0IjoxNzM0OTUzOTM1LCJqdGkiOiJiOGNmYjY1YTZkYmU0M2NkOWMwODZkOTIzYjMyZWMyZiIsInVzZXJfaWQiOiI1ZmZmNjM5NC1lNDNiLTRmZmQtYjhhOC04NWU5ZmI0NDY3NGIifQ.tflPJDuRLb8Oh71F_Qo6lHrMAFzHPA4E1LSnhce0zEs\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/auth/refresh/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"auth",
+						"refresh",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "api/conversations/",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM0OTU3NzM5LCJpYXQiOjE3MzQ5NTU5MzksImp0aSI6ImY3ZDU4OWViNDE1OTQwMWZhYzQzYTRiMzdjYTU0M2JmIiwidXNlcl9pZCI6IjVmZmY2Mzk0LWU0M2ItNGZmZC1iOGE4LTg1ZTlmYjQ0Njc0YiJ9.VW_CsE7w_r4aZ5H25tJPeYV6V1GZord-TDR9iaFQRCY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"participants\": [\"4f7ea967129e49d8b539e899261b3387\", \"5fff6394e43b4ffdb8a885e9fb44674b\"]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/api/conversations/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"api",
+						"conversations",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "send message",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM0OTU3NzM5LCJpYXQiOjE3MzQ5NTU5MzksImp0aSI6ImY3ZDU4OWViNDE1OTQwMWZhYzQzYTRiMzdjYTU0M2JmIiwidXNlcl9pZCI6IjVmZmY2Mzk0LWU0M2ItNGZmZC1iOGE4LTg1ZTlmYjQ0Njc0YiJ9.VW_CsE7w_r4aZ5H25tJPeYV6V1GZord-TDR9iaFQRCY",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"conversation_id\": \"f1c8fbae-8992-43b9-8525-c7895151e210\",\n    \"message_body\": \"hello there!\",\n    \"sender_id\": \"5fff6394e43b4ffdb8a885e9fb44674b\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/api/conversations/f1c8fbae-8992-43b9-8525-c7895151e210/messages/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"api",
+						"conversations",
+						"f1c8fbae-8992-43b9-8525-c7895151e210",
+						"messages",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "fetch all conversations",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzM0OTU3NzM5LCJpYXQiOjE3MzQ5NTU5MzksImp0aSI6ImY3ZDU4OWViNDE1OTQwMWZhYzQzYTRiMzdjYTU0M2JmIiwidXNlcl9pZCI6IjVmZmY2Mzk0LWU0M2ItNGZmZC1iOGE4LTg1ZTlmYjQ0Njc0YiJ9.VW_CsE7w_r4aZ5H25tJPeYV6V1GZord-TDR9iaFQRCY",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://bc6b-102-213-49-72.ngrok-free.app/api/conversations/",
+					"protocol": "https",
+					"host": [
+						"bc6b-102-213-49-72",
+						"ngrok-free",
+						"app"
+					],
+					"path": [
+						"api",
+						"conversations",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

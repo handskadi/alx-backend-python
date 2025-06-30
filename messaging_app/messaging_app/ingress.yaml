@@ -2,14 +2,16 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: messaging-app-ingress
+  namespace: default
   annotations:
-    # Enable ingress controller features if needed, e.g. nginx ingress rewrite
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
+  ingressClassName: nginx
   rules:
-  - http:
+  - host: messaging-app.local
+    http:
       paths:
-      - path: /api/
+      - path: /
         pathType: Prefix
         backend:
           service:

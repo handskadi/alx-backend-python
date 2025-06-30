@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
-""" Basic annotations concat """
-
+"""
+type-annotated function floor which takes a float n as
+argument and returns the floor of the float.
+"""
 import math
 
 
 def floor(n: float) -> int:
-    """ Returns the floor of the float """
+    """
+    return the largest integer that is less that or equal to the float value
+    """
     return math.floor(n)

@@ -1,26 +1,45 @@
-#!/usr/bin/python3
-
-import json
-
-seed = __import__('seed')
+import psycopg2
+def connect_to_prodev():
+    """
+    Connects to the 'ALX_prodev' database.
+    """
+    try:
+        connection = psycopg2.connect(
+            dbname="ALX_prodev",
+            user="alx",
+            password="alx",
+            host="localhost",
+            port="5432"
+        )
+        return connection
+    except psycopg2.Error as e:
+        print(f"Error connecting to ALX_prodev database: {e}")
+        return None
 
 def stream_users():
-    connect = seed.connect_to_prodev()
-    if connect:
-        cursor = connect.cursor()
-        cursor.execute("SELECT * FROM user_data")
+    """
+    Streams rows from the 'user_data' table one by one using a generator.
+    """
+    connection = connect_to_prodev()  # Establish connection to the database
+
+    try:
+        cursor = connection.cursor()
+        cursor.execute("SELECT * FROM user_data;")
+        
+        # Fetch and yield rows one by one using a while loop
         while True:
-            row = cursor.fetchone()
+            row = cursor.fetchone()  # Fetch the next row
             if row is None:
-                break
-            yield "{'user_id'" + ": " + row[0] + ", 'name'" + ": " + row[1] + ", 'email'" + ": " + row[2] + ", 'age'" + ":" + str(float(row[3])) + "}"
+                break  # Exit the loop when no rows are left
+            yield row  # Yield the current row
+    except Exception as e:
+        print(f"Error streaming users: {e}")
+    finally:
         cursor.close()
+        connection.close()
 
 if __name__ == "__main__":
-    connection = seed.connect_to_prodev()
-    if connection:
-        for user in stream_users():
-            json_user = json.dumps(user, default=str, indent=4)
-            print(json_user)
-            
-        connection.close()
+    # Iterate over the generator function and print only the first 6 rows
+    from itertools import islice
+    for user in islice(stream_users(), 6):
+        print(user)

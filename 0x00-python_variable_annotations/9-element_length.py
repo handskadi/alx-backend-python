@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-""" Let's duck type an iterable object"""
-from typing import Mapping, MutableMapping, Sequence, Iterable, List, Tuple
+"""
+Annotate the function parameters and return values with the appropriate types
+"""
+from typing import Tuple, List, Sequence, Iterable
 
 
 def element_length(lst: Iterable[Sequence]) -> List[Tuple[Sequence, int]]:
-    """ Element length """
+    """ducky typing they call it"""
     return [(i, len(i)) for i in lst]

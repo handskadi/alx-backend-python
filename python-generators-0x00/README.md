@@ -1,14 +1,12 @@
-# Database Configuration
+# About the Project
 
-    1. Set up the MySQL database, ALX_prodev with the table user_data with the following fields:
-        user_id(Primary Key, UUID, Indexed)
-        name (VARCHAR, NOT NULL)
-        email (VARCHAR, NOT NULL)
-        age (DECIMAL,NOT NULL)
-    2. Populate the database with the sample data from this user_data.csv
-        Prototypes:
-            def connect_db() :- connects to the mysql database server
-            def create_database(connection):- creates the database ALX_prodev if it does not exist
-            def connect_to_prodev() connects the the ALX_prodev database in MYSQL
-            def create_table(connection):- creates a table user_data if it does not exists with the required fields
-            def insert_data(connection, data):- inserts data in the database if it does not exist
+This project introduces advanced usage of Python generators to efficiently handle large datasets, process data in batches, and simulate real-world scenarios involving live updates and memory-efficient computations. The tasks focus on leveraging Python’s yield keyword to implement generators that provide iterative access to data, promoting optimal resource utilization, and improving performance in data-driven applications.
+
+## Learning Objectives
+__By completing this project, you will:__
+
+- Master Python Generators: Learn to create and utilize generators for iterative data processing, enabling memory-efficient operations.
+- Handle Large Datasets: Implement batch processing and lazy loading to work with extensive datasets without overloading memory.
+- Simulate Real-world Scenarios: Develop solutions to simulate live data updates and apply them to streaming contexts.
+- Optimize Performance: Use generators to calculate aggregate functions like averages on large datasets, minimizing memory consumption.
+- Apply SQL Knowledge: Use SQL queries to fetch data dynamically, integrating Python with databases for robust data management.

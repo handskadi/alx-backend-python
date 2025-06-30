@@ -1,28 +1,30 @@
-# Use official Python image as base
 FROM python:3.10
 
-# Set environment variables
+# set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Set working directory
-WORKDIR /app
+# set work directory
+WORKDIR /messageapp
 
-# Install system dependencies
+# install dependencies
 RUN apt-get update && apt-get install -y \
-    netcat \
-    && rm -rf /var/lib/apt/lists/*
+    gcc \
+    libpq-dev \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
+COPY ./requirements.txt /messageapp/requirements.txt
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Copy app source code
-COPY . .
+# add a non-root user
+RUN useradd --create-home appuser
+USER appuser
 
-# Expose the port Django runs on
+# copy project
+COPY . /messageapp/
+
+# Expose the port the app runs on
 EXPOSE 8000
 
-# Run Django's development server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# run the application
+CMD ["gunicorn", "messaging_app.wsgi:application", "--bind", "0.0.0.0:8000"]

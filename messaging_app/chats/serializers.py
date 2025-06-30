@@ -1,47 +1,39 @@
 from rest_framework import serializers
-from .models import user, Conversation, Message
+from .models import User, Conversation, Message
+from django.contrib.auth.hashers import make_password
 
+def validate_email(value):
+    if User.objects.filter(email=value).exists():
+        raise serializers.ValidationError("Email already exists")
+    return value
 
 class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for User model
-    """
-    full_name = serializers.SerializerMethodField()
-    phone_number = serializers.CharField(source='phone_number')
-    created = serializers.DateTimeField(read_only=True)
+    email = serializers.CharField(validators=[validate_email])
 
     class Meta:
-        model = user
-        fields = ['user_id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'is_active', 'created']
-        read_only_field = ['is_active']
+        model = User
+        fields = ['user_id', 'first_name', 'last_name', 'email', 'phone_number', 'role', 'created_at', 'password']
 
     def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}".strip()
+        return f"{obj.first_name} {obj.last_name}"
 
-    def validate_email(self, value):
-        if not value.endswith("@example.com"):
-            raise serializers.ValidationError("Email must be on the @example.com domain.")
-        return value
-
+    def create(self, validated_data):
+        validated_data['password'] = make_password(validated_data['password'])
+        return User.objects.create(**validated_data)
 
 class MessageSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Message model
-    """
-    sender = UserSerializer(read_only=True)
+    sender = serializers.StringRelatedField()
+    conversation = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = Message
-        fields = ['message_id', 'sender', 'message_body', 'sent_at']
+        fields = ['message_id', 'sender', 'conversation', 'message_body', 'sent_at']
 
-
+# StringRelatedField returns the string representation of the related field
 class ConversationSerializer(serializers.ModelSerializer):
-    """
-    Serializer for Conversation model
-    """
-    participants = UserSerializer(many=True, read_only=True)
-    messages = MessageSerializer(many=True, read_only=True)
+    participants = serializers.StringRelatedField(many=True)
+    messages = MessageSerializer(many=True, read_only=True) #nested messages
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'created_at', 'messages']
+        fields = ['conversation_id', 'participants', 'messages', 'created_at']

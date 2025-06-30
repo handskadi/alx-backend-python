@@ -1,0 +1,15 @@
+services:
+  alx_prodev_database:
+    image: postgres:latest
+    container_name: alx_prodev
+    environment:
+      POSTGRES_USER: alx
+      POSTGRES_PASSWORD: alx
+      POSTGRES_DB: ALX_prodev
+    ports:
+      - "5432:5432"
+    volumes:
+      - alx_prodev:/var/lib/postgresql/data
+
+volumes:
+  alx_prodev:

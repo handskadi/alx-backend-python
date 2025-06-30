@@ -1,54 +1,36 @@
-# Asynchronous Python (asyncio) Project
+# Project Folder README
 
-## Learning Objectives
+## Project Objective
 
-This project focuses on asynchronous programming in Python using the asyncio library. By the end of this project, you will be able to:
+The objective of this project is to help you understand and explain the following concepts without relying on external resources:
 
-1. Understand and use the `async` and `await` syntax in Python for asynchronous operations.
-2. Execute an async program with asyncio.
-3. Run concurrent coroutines to improve program efficiency.
-4. Create asyncio tasks to manage asynchronous operations effectively.
-5. Utilize the Python `random` module within asynchronous code.
+1. **Async and Await Syntax**: Understanding the purpose and usage of `async` and `await` keywords in Python's asynchronous programming model.
 
-## Requirements
+2. **Executing an Async Program with asyncio**: Learning how to execute an asynchronous program using the `asyncio` module, which provides a framework for writing single-threaded concurrent code.
 
-### General
+3. **Running Concurrent Coroutines**: Exploring techniques to run multiple coroutines concurrently using `asyncio` and take advantage of asynchronous execution.
 
-- **Python Version**: Python 3.7
-- **Operating System**: Ubuntu 18.04 LTS
+4. **Creating asyncio Tasks**: Understanding how to create tasks in `asyncio` to manage and coordinate the execution of multiple coroutines effectively.
 
-### Code Style and Documentation
+5. **Using the Random Module**: Familiarizing yourself with the `random` module, which provides functions for generating random numbers, selecting random elements, and performing other random-related operations.
 
-- All code files follow the `pycodestyle` (version 2.5.x) coding style guide.
-- Code files have a newline at the end.
-- The first line of code files starts with `#!/usr/bin/env python3`.
-- Functions and coroutines are appropriately type-annotated.
-- Modules have documentation using `python3 -c 'print(__import__("my_module").__doc__)'`.
-- Functions have documentation using `python3 -c 'print(__import__("my_module").my_function.__doc__)'`. The documentation consists of clear and meaningful sentences describing the purpose of the function.
+## Project Structure
 
-### Project Structure
-project-root/
-│
-├── your_code_file.py
-├── another_code_file.py
-│
-└── README.md
+The project folder contains the following files:
 
-### Usage
+1. `main.py`: This file contains the main code for the project. It demonstrates the usage of async and await syntax, executing async programs with asyncio, running concurrent coroutines, creating asyncio tasks, and utilizing the random module.
 
-Include instructions on how to run and use your code here.
+2. `README.md` (this file): A Markdown file providing an overview of the project, its objectives, and instructions.
 
-### Example
+## Getting Started
 
-Provide an example or code snippet demonstrating the usage of your async code and asyncio tasks.
+To get started with this project, follow these steps:
 
-```python
-import asyncio
+1. Clone the project repository to your local machine.
 
-async def main():
-    # Your async code here
-    pass
+2. Ensure you have Python 3.x installed on your system.
 
-if __name__ == "__main__":
-    asyncio.run(main())
+3. Install the required dependencies by running the following command in your terminal:
 
+   ```bash
+   pip install asyncio
