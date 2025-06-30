@@ -1,31 +1,26 @@
-from seed import connect_to_prodev
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
-from models import User
+#!/usr/bin/python3
+
+import json
+
+seed = __import__('seed')
 
 def stream_users():
+    connect = seed.connect_to_prodev()
+    if connect:
+        cursor = connect.cursor()
+        cursor.execute("SELECT * FROM user_data")
+        while True:
+            row = cursor.fetchone()
+            if row is None:
+                break
+            yield "{'user_id'" + ": " + row[0] + ", 'name'" + ": " + row[1] + ", 'email'" + ": " + row[2] + ", 'age'" + ":" + str(float(row[3])) + "}"
+        cursor.close()
 
-    engine = connect_to_prodev()
-    Session = sessionmaker(bind=engine)
-    session = Session()
-
-    with Session() as session:
-        stmt = select(User)
-        user_obj = session.scalars(stmt)
-        for user in user_obj:  
-            yield {
-                'user_id': user.user_id,
-                'name': user.name,
-                'email': user.email,
-                'age': user.age
-            }
-
-
-
-if __name__ == '__main__':
-    from itertools import islice
-    for user in islice(stream_users(), 6):
-        print(user)
-
-
-
+if __name__ == "__main__":
+    connection = seed.connect_to_prodev()
+    if connection:
+        for user in stream_users():
+            json_user = json.dumps(user, default=str, indent=4)
+            print(json_user)
+            
+        connection.close()

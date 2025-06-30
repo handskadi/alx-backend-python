@@ -1,46 +1,53 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
+from .managers import UnreadMessagesManager
 
-
-class UnreadMessagesManager(models.Manager):
-    def for_user(self, user):
-        return self.filter(receiver=user, read=False).only('id', 'sender', 'content', 'timestamp')
+User = settings.AUTH_USER_MODEL
 
 
 class Message(models.Model):
-    sender = models.ForeignKey(User, related_name='sent_messages', on_delete=models.CASCADE)
-    receiver = models.ForeignKey(User, related_name='received_messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+    read = models.BooleanField(default=False)
     edited = models.BooleanField(default=False)
-    edited_by = models.ForeignKey(User, null=True, blank=True, related_name='edited_messages', on_delete=models.SET_NULL)
-    parent_message = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
-    read = models.BooleanField(default=False)  # New field to indicate if message has been read
+    edited_by = models.ForeignKey(User, null=True, on_delete=models.SET_NULL, related_name='edited_messages')
+    parent_message = models.ForeignKey('self', null=True, blank=True, on_delete=models.CASCADE, related_name='replies')
 
-    objects = models.Manager()  # Default manager
-    unread_messages = UnreadMessagesManager()  # Custom manager for unread messages
+    objects = models.Manager()
+    unread = UnreadMessagesManager()
 
     def __str__(self):
-        reply_note = " (Reply)" if self.parent_message else ""
-        return f"From {self.sender.username} to {self.receiver.username}{reply_note}"
+        return f"Message from {self.sender} -> {self.receiver}"
+
+    def get_thread(self):
+        replies = []
+        def fetch_replies(message):
+            children = message.replies.all()
+            for child in children:
+                replies.append(child)
+                fetch_replies(child)
+
+        fetch_replies(self)
+        return replies
 
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    message = models.ForeignKey(Message, on_delete=models.CASCADE)
-    content = models.CharField(max_length=255)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
     is_read = models.BooleanField(default=False)
-    timestamp = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Notification for {self.user.username} - Read: {self.is_read}"
+        return f"Notification for {self.user} about message {self.message.id}"
 
 
-class MessageHistory(models.Model):
-    message = models.ForeignKey(Message, related_name='history', on_delete=models.CASCADE)
+class MessageHistory(models.Model):  # NEW MODEL
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='history')
     old_content = models.TextField()
     edited_at = models.DateTimeField(auto_now_add=True)
-    edited_by = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL)
+    edited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
 
     def __str__(self):
-        return f"Edit of message ID {self.message.id} at {self.edited_at}"
+        return f"History for Message {self.message.id} at {self.edited_at}"

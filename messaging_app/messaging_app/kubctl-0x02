@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e
+
+NAMESPACE="default"
+SERVICE_NAME="messaging-app-service"
+
+echo "🚀 Deploying blue version..."
+kubectl apply -f blue_deployment.yaml
+
+echo "🚀 Deploying green version..."
+kubectl apply -f green_deployment.yaml
+
+echo "🚀 Applying Service (routing to blue version)..."
+kubectl apply -f kubeservice.yaml
+
+echo "⏳ Waiting for deployments to stabilize..."
+kubectl rollout status deployment/messaging-app-blue -n "$NAMESPACE"
+kubectl rollout status deployment/messaging-app-green -n "$NAMESPACE"
+
+echo "✅ Current pods:"
+kubectl get pods -l app=messaging-app -n "$NAMESPACE"
+
+echo "📝 Checking logs from green deployment pods for errors..."
+GREEN_PODS=$(kubectl get pods -l app=messaging-app,version=green -n "$NAMESPACE" -o jsonpath='{.items[*].metadata.name}')
+
+for pod in $GREEN_PODS; do
+  echo "---- Logs from pod: $pod ----"
+  kubectl logs "$pod" -n "$NAMESPACE"
+done
+
+echo
+echo "👉 To switch traffic to green deployment, run:"
+echo "kubectl patch svc $SERVICE_NAME -p '{\"spec\":{\"selector\":{\"app\":\"messaging-app\",\"version\":\"green\"}}}'"

@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import time
 import sqlite3 
 import functools
@@ -7,25 +9,26 @@ query_cache = {}
 
 def with_db_connection(func):
     @functools.wraps(func)
-    def connect_db(*args, **kwargs):
-      conn = sqlite3.connect('users.db')
-      try:
-        result =  func(conn, *args, **kwargs)
-      finally:
-         conn.close()
-      return result
-    return connect_db
+    def wrapper(*args, **kwargs):
+        conn = sqlite3.connect("users.db")
+        try:
+            result = func(conn, *args, **kwargs)
+            return result
+        finally:
+            conn.close()
+    return wrapper
 
 def cache_query(func):
     @functools.wraps(func)
-    def wrapper_cache(*args, **kwargs):
-        cache_key = tuple(kwargs.items())
-        if cache_key not in wrapper_cache.cache:
-            wrapper_cache.cache[cache_key] = func(*args, **kwargs)
-        return wrapper_cache.cache[cache_key]
-    wrapper_cache.cache = query_cache
-    return wrapper_cache             
-
+    def wrapper(conn, query, *args, **kwargs):
+        if query in query_cache:
+            print("[CACHE HIT] Returning cached result.")
+            return query_cache[query]
+        print("[CACHE MISS] Executing query and caching result.")
+        result = func(conn, query, *args, **kwargs)
+        query_cache[query] = result
+        return result
+    return wrapper
 
 @with_db_connection
 @cache_query

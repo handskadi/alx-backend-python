@@ -1,56 +1,59 @@
-from django.shortcuts import render
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from django.contrib.auth.models import User
-from .models import Message, Notification, MessageHistory
-from .serializers import UserSerializer, MessageSerializer, NotificationSerializer, MessageHistorySerializer
-from rest_framework.response import Response
+from django.contrib.auth import get_user_model
 from django.http import JsonResponse
-from .managers import UnreadMessagesManager
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from .models import Message
+from .serializers import MessageSerializer
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from django.views.decorators.cache import cache_page
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
+User = get_user_model()
 
-    @action(detail=True, methods=['delete'], url_path='custom-delete')
-    def delete_user(self, request, pk=None):
-        user = self.get_object()
-        user.delete()
-        return Response({"message": "User deleted"}, status=status.HTTP_204_NO_CONTENT)
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@cache_page(60)
+def conversation_messages(request, conversation_id):
+    messages = Message.objects.filter(conversation_id=conversation_id).select_related(
+        'sender', 'receiver'
+    ).order_by('timestamp')
+    serializer = MessageSerializer(messages, many=True)
+    return Response(serializer.data)
+
+@require_http_methods(["DELETE"])
+@login_required
+def delete_user(request):
+    user = request.user
+    username = user.username
+    user.delete()
+    return JsonResponse({"message": f"User '{username}' and related data deleted."})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def unread_messages_view(request):
+    user = request.user
+    unread_messages = Message.unread.unread_for_user(user).only('id', 'content', 'timestamp', 'sender')
+    serializer = MessageSerializer(unread_messages, many=True)
+    return Response(serializer.data)
 
 
 class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.filter().select_related(
+        'sender', 'receiver', 'edited_by', 'parent_message'
+    ).prefetch_related('replies')
     serializer_class = MessageSerializer
 
-    def get_queryset(self):
-        return Message.objects.filter(sender=self.request.user)
+    def perform_create(self, request, serializer):
+        sender=request.user
+        serializer.save(sender)
 
-    @method_decorator(cache_page(60))
-    def get_conversation(self, request, *args, **kwargs):
-        return super().list(request, *args, **kwargs)
-
-
-    @action(detail=False, methods=['get'])
-    def unread(self, request):
-        unread_messages = Message.unread.unread_for_user(request.user).only('sender_id', 'content', 'timestamp').select_related('sender')
-        serializer = self.get_serializer(unread_messages, many=True)
+    @action(detail=True, methods=['get'], url_path='thread')
+    def get_thread(self, request, pk=None):
+        message = get_object_or_404(Message, pk=pk)
+        thread_replies = message.get_thread()
+        serializer = self.get_serializer(thread_replies, many=True)
         return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def inbox(request):
-            messages = Message.objects.filter(sender=request.user).select_related('sender', 'receiver').prefetch_related('replies')
-            serializer = MessageSerializer(messages, many=True)
-            return JsonResponse(serializer.data, safe=False)
-
-
-class NotificationViewSet(viewsets.ModelViewSet):
-    serializer_class = NotificationSerializer
-
-    def get_queryset(self):
-    return Notification.objects.filter(recipient=self.request.user)
-
-
-class MessageHistoryViewSet(viewsets.ModelViewSet):
-    queryset = MessageHistory.objects.all()
-    serializer_class = MessageHistorySerializer

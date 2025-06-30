@@ -1,48 +1,47 @@
 from rest_framework import serializers
-from .models import users, Conversation, Message
-from rest_framework.serializers import ValidationError
-
-class UsersSerializer(serializers.ModelSerializer):
-
-	full_name = serializers.SerializerMethodField()
-
-	class Meta:
-		model = users
-		fields = ['user_id', 'email', 'first_name', 'last_name', 'full_name', 'password']
-
-		extra_kwargs = {
-			'password' : {'write_only': True}
-		}
-
-	
-	def get_full_name(self, obj):
-		return f"{obj.first_name} {obj.last_name}"
-	
-	def validate_password(self, value):
-
-		if len(value) < 8:
-			raise serializers.ValidationError("Password must be at least 8 chars long")
-		return value
-	
-	def create(self, validated_data):
-		user = users.objects.create(
-            username=validated_data['email'],
-            email=validated_data['email'],
-            first_name=validated_data.get('first_name', ''),
-            last_name=validated_data.get('last_name', ''),
-            password=validated_data['password']
-		)
-		return user
+from .models import user, Conversation, Message
 
 
-class ConversationSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = Conversation
-		# serializers.CharField
-		fields = "__all__"
+class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for User model
+    """
+    full_name = serializers.SerializerMethodField()
+    phone_number = serializers.CharField(source='phone_number')
+    created = serializers.DateTimeField(read_only=True)
+
+    class Meta:
+        model = user
+        fields = ['user_id', 'email', 'first_name', 'last_name', 'full_name', 'phone_number', 'is_active', 'created']
+        read_only_field = ['is_active']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
+
+    def validate_email(self, value):
+        if not value.endswith("@example.com"):
+            raise serializers.ValidationError("Email must be on the @example.com domain.")
+        return value
 
 
 class MessageSerializer(serializers.ModelSerializer):
-	class Meta:
-		model = Message
-		fields = "__all__"
+    """
+    Serializer for Message model
+    """
+    sender = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Message
+        fields = ['message_id', 'sender', 'message_body', 'sent_at']
+
+
+class ConversationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Conversation model
+    """
+    participants = UserSerializer(many=True, read_only=True)
+    messages = MessageSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Conversation
+        fields = ['conversation_id', 'participants', 'created_at', 'messages']

@@ -1,9 +1,14 @@
-## Seed.py Functionality
+# Database Configuration
 
-The `seed.py` script contains functions to set up the database and populate it with data from `user_data.csv`. Here's a breakdown of the functions:
-
-*   **connect\_db()**: Establishes a connection to the MySQL database 'ALX_prodev'.
-*   **create_database(connection)**: Creates the 'ALX_prodev' database if it doesn't already exist.
-*   **connect_to_prodev()**: Connects to the ALX_prodev database.
-*   **create_table(connection)**: Creates the 'user_data' table in the database, based on the schema defined in `models.py`.
-*   **insert_data(connection, data)**: Reads data from the `user_data.csv` file and inserts it into the 'user_data' table. It skips duplicate entries based on email and handles potential `ValueError` exceptions during data insertion.
+    1. Set up the MySQL database, ALX_prodev with the table user_data with the following fields:
+        user_id(Primary Key, UUID, Indexed)
+        name (VARCHAR, NOT NULL)
+        email (VARCHAR, NOT NULL)
+        age (DECIMAL,NOT NULL)
+    2. Populate the database with the sample data from this user_data.csv
+        Prototypes:
+            def connect_db() :- connects to the mysql database server
+            def create_database(connection):- creates the database ALX_prodev if it does not exist
+            def connect_to_prodev() connects the the ALX_prodev database in MYSQL
+            def create_table(connection):- creates a table user_data if it does not exists with the required fields
+            def insert_data(connection, data):- inserts data in the database if it does not exist

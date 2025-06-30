@@ -1,36 +1,38 @@
-from seed import connect_to_prodev
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
-from models import User
+#!/usr/bin/python3
 
+import decimal
+
+seed = __import__('seed')
 
 def stream_user_ages():
+    connection = seed.connect_to_prodev()
+    cursor = connection.cursor()
+    cursor.execute('SELECT * FROM user_data')
 
-    engine = connect_to_prodev()
-    Session = sessionmaker(bind=engine)
-    
-  
-    with Session() as session:    
-        stmt = select(User.age)
-        result = session.scalars(stmt)
-        
-        for age in result:
-            yield age
+    while True:
+        row = cursor.fetchone()
+        if row is None:
+            break
+        age = row[3]
+        if isinstance(age, decimal.Decimal):
+            age = float(age)
+        yield age
+    cursor.close()
 
-def avg_user():
-    ages = stream_user_ages()
-    counter = 0
-    avg = 0
-    for age in ages:
-        avg += age
-        counter += 1
+def calculate_average_age():
+    total_age = 0.0
+    count = 0
 
-    print(f"Average age of users: {round(avg/counter, 2)}")
+    for age in stream_user_ages():
+        total_age += age
+        count += 1
 
+    if count > 0:
+        average = total_age/count
+        print(f"Average age of users: {average: .2f}")
 
-
-# for age in stream_user_ages():
-#     print(age)
-
-
-avg_user()
+if __name__ == "__main__":
+    connection = seed.connect_to_prodev()
+    if connection:
+        calculate_average_age() 
+        connection.close()

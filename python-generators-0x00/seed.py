@@ -1,102 +1,99 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import text
-from models import Base, User
-import csv
+#!/usr/bin/python3
+
+import mysql.connector
+from mysql.connector import Error
+import pandas as pd
+import uuid
 
 def connect_db():
     try:
-        engine = create_engine('mysql+pymysql://alx_user:alx_password@192.168.96.2:3306/ALX_prodev')
-        print("connection successful") 
-    except Exception as e:
-        print(f"Error while connecting to database: {e}")  
+        connection = mysql.connector.connect(
+            host = 'localhost',
+            user = 'root',
+            password = 'bini'
+        )
 
-    return engine        
-
+        if connection.is_connected():
+            return connection
+    except Error as e:
+        print(f"Error while connecting to the MySQL: {e}")
+        return None
 
 def create_database(connection):
     try:
-        engine, _ = connection
-        with engine.connect() as conn:
-            result = conn.execute(
-                text("SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'ALX_prodev'")
-            )
-            
-            if not result.fetchone():
-                conn.execute(text("CREATE DATABASE ALX_prodev"))
-                print("Database ALX_prodev created successfully")
-            else:
-                print("Database ALX_prodev is present")
-                
-    except Exception as e:
+        #Creating cursor to execute mysql commands
+        cursor = connection.cursor()
+
+        #SQL command to create new database
+        cursor.execute('CREATE DATABASE IF NOT EXISTS ALX_prodev')
+        cursor.close()
+    except Error as e:
         print(f"Error creating database: {e}")
- 
 
-
-
-def connect_to_prodev(): 
+def connect_to_prodev():
     try:
-        engine = create_engine('mysql+pymysql://alx_user:alx_password@192.168.96.2:3306/ALX_prodev')
-        print("connection successful")
-        return engine
-    except Exception as e:
-        print(f"Error while connecting to database: {e}")
-        return None
+        connection = mysql.connector.connect(
+            host = 'localhost',
+            user = 'root',
+            password = 'bini',
+            database = 'ALX_prodev'
+        )
 
+        if connection.is_connected():
+            return connection
+    except Error as e:
+        print(f"Error while connecting to 'ALX_prodev' Database: {e}")
+        return None
 
 def create_table(connection):
     try:
-        Base.metadata.create_all(bind=connection)
+        cursor = connection.cursor()
+        #SQL command to use the database already created
+        cursor.execute('USE ALX_prodev')
+
+        #SQL command to create new table
+        create_table_sql = """
+            CREATE TABLE IF NOT EXISTS user_data (
+                user_id CHAR(36) PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(100) NOT NULL,
+                age DECIMAL(5, 2) NOT NULL,
+                INDEX(user_id)
+            )
+        """
+        cursor.execute(create_table_sql)
         print("Table user_data created successfully")
-    except Exception as e:
-        print("Error while creating table")
-
-
-
+        cursor.close()
+    except Error as e:
+        print(f"Error while creating table: {e}")
 def insert_data(connection, data):
     try:
-        Session = sessionmaker(bind=connection)
-        session = Session()
-
-        with open(data, 'r') as file:
-            csv_reader = csv.DictReader(file)
-            
-            for row in csv_reader:
-                existing_user = session.query(User).filter_by(email=row['email']).first()
-                
-                if existing_user:
-                    print(f"Skipping duplicate: {row['email']}")
-                    continue     
-
-                try:
-                    new_user = User(
-                        name=row['name'],
-                        email=row['email'],
-                        age=float(row['age'])
-                    )
-                    
-                    session.add(new_user)
-                    
-                except ValueError as e:
-                    print(f"Skipping row due to error: {e} - Row: {row}")
-                    continue
-            
-            session.commit()
-            print(f"Successfully inserted users records")
-            
-    except Exception as e:
-        session.rollback()
-        print(f"Error during data insertion: {e}")
-    finally:
-        session.close()
-            
-
-
-
+        #SQL command to insert data to a table
+        cursor = connection.cursor()
+        for index, row in pd.read_csv(data).iterrows():
+            user_id = str(uuid.uuid4())
+            insert_query = """
+                INSERT INTO user_data(user_id, name, email, age)
+                VALUES(%s, %s, %s, %s)
+            """
+            values = (user_id, row['name'], row['email'], float(row['age']))
+            cursor.execute(insert_query, values)
+        connection.commit()
+        cursor.close()
+    except Error as e:
+        print(f"Error while inserting data: {e}")
 
 if __name__ == "__main__":
-    engine = connect_to_prodev()
-    if engine:
-        create_table(engine)
+    try:
+        conn = connect_db()
+        if conn:
+            create_database(conn)
+            conn.close()
 
-    insert_data(engine, 'python-generators-0x00/user_data.csv')
+        conn_prodev = connect_to_prodev()
+        if connect_to_prodev:
+            create_table(conn_prodev)
+            insert_data(conn_prodev, 'user_data.csv')
+            conn_prodev.close()
+    except Error as e:
+        print(f"Unexpected error {e}")

@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set -e
+
+DEPLOYMENT_NAME="messaging-app-blue"
+NAMESPACE="default"
+APP_LABEL="messaging-app"
+CHECK_URL="http://localhost:8000"  # Change this if you access the app differently
+
+echo "🔄 Applying updated deployment with image version 2.0..."
+kubectl apply -f blue_deployment.yaml
+
+echo "⏳ Monitoring rollout status..."
+kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+
+echo "🚦 Starting continuous curl test to check for downtime (CTRL+C to stop)..."
+
+# Run curl in background, keep track of failures
+FAILURES=0
+
+while true; do
+  STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" $CHECK_URL || echo "000")
+  TIMESTAMP=$(date +"%T")
+
+  if [[ "$STATUS_CODE" != "200" ]]; then
+    echo "[$TIMESTAMP] Request failed with status code: $STATUS_CODE"
+    ((FAILURES++))
+  else
+    echo "[$TIMESTAMP] Request succeeded"
+  fi
+
+  sleep 1
+done &
+
+CURL_PID=$!
+
+# Wait for rollout completion again as a safe guard (optional)
+kubectl rollout status deployment/$DEPLOYMENT_NAME -n $NAMESPACE
+
+# Kill the curl loop after rollout is complete
+kill $CURL_PID
+
+echo "✅ Rolling update complete."
+
+echo "🔍 Current pods:"
+kubectl get pods -l app=$APP_LABEL,version=blue -n $NAMESPACE

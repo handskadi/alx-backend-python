@@ -1,54 +1,68 @@
-from django.shortcuts import render, get_list_or_404
-from rest_framework.viewsets import ViewSet, ModelViewSet
+from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.decorators import action 
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer, UsersSerializer
-from rest_framework import filters
-from django_filters.rest_framework import DjangoFilterBackend
-from django.http import Http404
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from .permissions import IsParticipantOfConversation
 from .filters import MessageFilter
+from .pagination import MessagePagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAuthenticated
+from .models import Conversation, Message, user
+from .serializers import ConversationSerializer, MessageSerializer
+from django.shortcuts import get_object_or_404
 
-class ConversationViewSet(ModelViewSet):
-	permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-	queryset = Conversation.objects.all()
-	serializer_class = ConversationSerializer
-	filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-	filterset_fields = ['participants']
-	search_fields = ['participants__email'] 
-
-	def get_queryset(self):
-		user = self.request.user
-		return Conversation.objects.filter(participants=user)
+from .permissions import IsParticipantOfConversation
 
 
+class ConversationViewSet(viewsets.ModelViewSet):
+    serializer_class = ConversationSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
 
-class MessageViewSet(ModelViewSet):
-	permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-	queryset = Message.objects.all()
-	filter_backends = [DjangoFilterBackend, filters.SearchFilter] 
-	filterset_class = MessageFilter
-	search_fields = ['message_body']
-	serializer_class = MessageSerializer
+    def get_queryset(self):
+        return Conversation.objects.filter(participants=self.request.user).distinct()
+
+    def create(self, request, *args, **kwargs):
+        participant_ids = request.data.get('participant_ids', [])
+        if not participant_ids:
+            return Response({'error': 'At least one participant is required.'}, status=400)
+
+        participants = user.objects.filter(user_id__in=participant_ids)
+        if not participants:
+            return Response({'error': 'No valid users found.'}, status=400)
+
+        conversation = Conversation.objects.create()
+        conversation.participants.add(*participants, request.user)
+        serializer = self.get_serializer(conversation)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-	@action(detail=False, methods=['post'])
-	def send_message(self, request):
-		serializer = self.get_serializer(data=request.data)
-		if serializer.is_valid(raise_exception=True):
-			serializer.save(sender=request.user)
-			return Response(serializer.data, status=status.HTTP_201_CREATED)
-		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-	
+class MessageViewSet(viewsets.ModelViewSet):
+    serializer_class = MessageSerializer
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]
+    pagination_class = MessagePagination
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = MessageFilter
 
-	def get_queryset(self):
-		conversation_id = self.kwargs['conversation_pk']
+    def get_queryset(self):
+        return Message.objects.filter(conversation__participants=self.request.user).order_by('-created_at')
 
-		user = self.request.user
-		if not Conversation.objects.filter(pk=conversation_id, participants=user).exists():
-			raise Http404
+    def create(self, request, *args, **kwargs):
+        conversation_id = request.data.get('conversation')
+        content = request.data.get('content')
 
-		return Message.objects.filter(conversation_id=conversation_id)
+        if not conversation_id or not content:
+            return Response({'error': 'conversation and content are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({'error': 'Conversation not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user not in conversation.participants.all():
+            return Response({'error': 'You are not a participant of this conversation.'}, status=status.HTTP_403_FORBIDDEN)
+
+        message = Message.objects.create(
+            sender=request.user,
+            conversation=conversation,
+            content=content
+        )
+
+        serializer = self.get_serializer(message)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

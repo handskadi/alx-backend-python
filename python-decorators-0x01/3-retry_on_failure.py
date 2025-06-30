@@ -1,31 +1,38 @@
+#!/usr/bin/python3
+
 import time
 import sqlite3 
 import functools
 
+#### paste your with_db_decorator here
+
 def with_db_connection(func):
     @functools.wraps(func)
-    def connect_db(*args, **kwargs):
-      conn = sqlite3.connect('users.db')
-      try:
-        result =  func(conn, *args, **kwargs)
-      finally:
-         conn.close()
-      return result
-    return connect_db
+    def wrapper(*args, **kwargs):
+        conn = sqlite3.connect("users.db")
+        try:
+            result = func(conn, *args, **kwargs)
+            return result
+        finally:
+            conn.close()
+    return wrapper
 
-def retry_on_failure(retries, delay):
-    def decorator_retry(func):
-      @functools.wraps(func)
-      def retry(*args, **kwargs):
-        for attempt in range(retries):
-            try:
-              return func(*args, **kwargs)
-            except sqlite3.Error as e:
-              time.sleep(delay)
-      return retry
-    return decorator_retry
-
-     
+def retry_on_failure(retries=3, delay=1):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            exception = None
+            for attempt in range(1, retries + 1):
+                try:
+                    return func(*args, **kwargs)
+                except Exception as e:
+                    print(f"[Retry {attempt/retries}] Error: {e}")
+                    exception = e
+                    time.sleep(delay)
+            print("[Error] All retries failed.")
+            raise exception
+        return wrapper
+    return decorator
 
 @with_db_connection
 @retry_on_failure(retries=3, delay=1)
